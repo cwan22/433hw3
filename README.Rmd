@@ -1,0 +1,82 @@
+---
+title: "README"
+author: "Annabelle Wan"
+date: "10/5/2021"
+output: github_document
+---
+
+```{r}
+# Our task is to find if the time of day, carrier, departure airport, and season will influence the flights' delay based on flights data provided.
+library(dplyr)
+library(nycflights13)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+filter(flights, !dep_delay>0)
+```
+
+```{r}
+#Following chunk will show us if the time of day will influence the flights' delay. 
+time_of_day <- flights %>% 
+  group_by(hour) %>% 
+  summarize(pro_not_delay=sum(!dep_delay>0, na.rm=TRUE)/n(),
+            num_not_delay=sum(!dep_delay>0, na.rm=TRUE))
+time_of_day=time_of_day[-1,]
+time_of_day
+ggplot(time_of_day, mapping = aes(x=hour, y=pro_not_delay))+
+  geom_line()
+
+# People would like to take a flight in the morning if they want to avoid delays as much as possible since in the morning, especially between 5am-9 am, people have high chance to depart on time (over than 60% chance in the morning, and this chance could over 70% if people leave between 5am-9 am).
+```
+
+```{r}
+#Following chunk will show us if the carrier will influence the flights' delay. 
+carrier_reason<- flights %>% 
+  group_by(carrier) %>% 
+  summarize(num_not_delay=sum(!dep_delay>0, na.rm=TRUE),
+            pro_not_delay=sum(!dep_delay>0, na.rm=TRUE)/n()) %>% 
+  arrange(desc(pro_not_delay))
+carrier_reason
+ggplot(carrier_reason, aes(x=carrier, y=pro_not_delay)) + 
+  geom_bar(stat="identity")
+# The time of day should fly if I want to avoid delays does not really depend on carriers. Almost all of carriers have more than 50% chance to depart on time. And the difference of departure on time among carriers is not significant.
+```
+
+
+```{r}
+#Following chunk will show us if the departure airport will influence the flights' delay. 
+origin_reason<- flights %>% 
+  group_by(origin) %>% 
+  summarize(num_not_delay=sum(!dep_delay>0, na.rm=TRUE),
+            pro_not_delay=sum(!dep_delay>0, na.rm=TRUE)/n()) %>% 
+  arrange(desc(pro_not_delay))
+origin_reason
+bp<- ggplot(origin_reason, aes(x="", y=pro_not_delay, fill=origin))+
+  geom_bar(width = 1, stat = "identity")
+pie_origin <- bp + coord_polar("y", start=0)
+pie_origin
+# The time of day should fly if I want to avoid delays not really depend on origin place to fly. Different origins has very small different proportions and numbers of flights that not delay.
+```
+
+
+```{r}
+#Following chunk will show us if the season will influence the flights' delay. 
+nm1 <- setNames(rep(c("Winter", "Spring", "Summer", "Fall"),
+        each = 3), month.name)
+season_reason<-flights %>% 
+  mutate(season = nm1[month]) %>% 
+  group_by(season) %>% 
+  summarize(pro_not_delay=sum(!dep_delay>0, na.rm=TRUE)/n(),
+            num_not_delay=sum(!dep_delay>0, na.rm=TRUE))
+season_reason
+ggplot(season_reason, mapping=aes(x=season, y=pro_not_delay))+
+  geom_bar(stat="identity")
+
+#The time of day should fly if I want to avoid delays does not depend on season. Different seasons has around 2% different proportions among each other.
+
+
+#Finally, we can conclude that among the factors of the time of day, carrier, departure airport, and season, we can say that only the time of day will influence the flights' delay most. Other factors have the influence, but they do not have large influence as the time of day does.
+```
+
